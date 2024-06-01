@@ -5,6 +5,7 @@ import (
 
 	"github.com/FabioSebs/NotiService/internal/config"
 	"github.com/FabioSebs/NotiService/internal/domain/services/email"
+	"github.com/FabioSebs/NotiService/internal/server"
 	"github.com/FabioSebs/NotiService/internal/utils"
 )
 
@@ -14,7 +15,8 @@ type Environment struct {
 }
 
 type Services struct {
-	Email email.Email
+	Email  email.Email
+	Server server.Server
 }
 
 func NewConfiguration() (env Environment) {
@@ -33,11 +35,17 @@ func NewConfiguration() (env Environment) {
 		Password: os.Getenv("smtp.password"),
 	}
 
-	config := config.NewConfig(database, smtp)
+	http := config.HTTP{
+		Host: os.Getenv("api.host"),
+		Port: os.Getenv("api.port"),
+	}
+
+	config := config.NewConfig(database, smtp, http)
 
 	// services
 	svcs := Services{
-		Email: email.NewEmailer(config),
+		Email:  email.NewEmailer(config),
+		Server: server.NewServer(config),
 	}
 
 	// return

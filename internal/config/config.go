@@ -5,6 +5,7 @@ import _ "github.com/joho/godotenv/autoload"
 type Config struct {
 	Database Database
 	SMTP     SMTP
+	HTTP     HTTP
 }
 
 type Database struct {
@@ -21,9 +22,15 @@ type SMTP struct {
 	Password string
 }
 
-func NewConfig(db Database, smtp SMTP) Config {
+type HTTP struct {
+	Host string
+	Port string
+}
+
+func NewConfig(db Database, smtp SMTP, http HTTP) Config {
 	return Config{
 		db,
 		smtp,
+		http,
 	}
 }
