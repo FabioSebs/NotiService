@@ -15,16 +15,16 @@ type Email struct {
 	Cfg    config.SMTP
 }
 
-func NewEmailer(cfg config.Config) (e Email) {
-	e = Email{
+func NewEmailer(cfg config.Config) Emailer {
+	return &Email{
 		Client: email.NewEmail(),
 		Cfg:    cfg.SMTP,
 	}
-	return
 }
 
 func (e *Email) Send(subject string) {
+	// Logic goes here
 
 }
 
-func (e *Email) SendHTML() {}
+func (e *Email) SendHTML(subject string) {}

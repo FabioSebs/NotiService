@@ -1,13 +1,27 @@
 package handlers
 
+import (
+	"github.com/FabioSebs/NotiService/internal/domain/services/email"
+	"github.com/labstack/echo/v4"
+)
+
 type EmailHandler interface {
-	//TODO:
+	SendEmail(ctx echo.Context) error
+	// add more
 }
 
 type emailHandler struct {
-	//TODO:
+	Service email.Emailer
 }
 
-func SetUpHandler() EmailHandler {
-	return emailHandler{}
+func NewEmailHandler(svc email.Emailer) EmailHandler {
+	return &emailHandler{
+		Service: svc,
+	}
+}
+
+func (e *emailHandler) SendEmail(ctx echo.Context) error {
+	// request logic goes here
+	e.Service.Send("") // TODO:
+	return nil
 }

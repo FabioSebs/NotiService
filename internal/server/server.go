@@ -4,17 +4,20 @@ import (
 	"net/http"
 
 	"github.com/FabioSebs/NotiService/internal/config"
+	"github.com/FabioSebs/NotiService/internal/server/handlers"
 	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
-	cfg config.HTTP
+	cfg      config.HTTP
+	handlers handlers.Handlers
 	// TODO: handlers
 }
 
-func NewServer(cfg config.Config) Server {
+func NewServer(cfg config.Config, handlers handlers.Handlers) Server {
 	return Server{
-		cfg: cfg.HTTP,
+		cfg:      cfg.HTTP,
+		handlers: handlers,
 	}
 }
 
