@@ -1,7 +1,5 @@
 package config
 
-import _ "github.com/joho/godotenv/autoload"
-
 type Config struct {
 	Database Database
 	SMTP     SMTP
