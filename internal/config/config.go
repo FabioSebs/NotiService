@@ -9,8 +9,10 @@ type Config struct {
 type Database struct {
 	ConnString string
 	Port       int
-	User       string
+	Name       string
 	Password   string
+	User       string
+	Host       string
 }
 
 type SMTP struct {

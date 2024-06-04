@@ -6,6 +6,7 @@ import (
 
 	"github.com/FabioSebs/NotiService/internal/config"
 	"github.com/FabioSebs/NotiService/internal/constants"
+	"github.com/FabioSebs/NotiService/internal/domain/controllers"
 	"github.com/jordan-wright/email"
 )
 
@@ -19,12 +20,14 @@ type Emailer interface {
 type Email struct {
 	Client *email.Email
 	Cfg    config.SMTP
+	Ctrl   controllers.EmailController
 }
 
-func NewEmailer(cfg config.Config) Emailer {
+func NewEmailService(cfg config.Config, ctrl controllers.EmailController) Emailer {
 	return &Email{
 		Client: email.NewEmail(),
 		Cfg:    cfg.SMTP,
+		Ctrl:   ctrl, // make a master controller
 	}
 }
 
@@ -55,8 +58,14 @@ func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPON
 	e.Client.To = recepients
 	e.Client.Subject = subject
 	e.Client.HTML = []byte(html_msg)
+
 	// send message
-	e.Client.Send(serverport, smtp.PlainAuth("scraper", sender, pwd, server))
+	if err = e.Client.Send(serverport, smtp.PlainAuth("scraper", sender, pwd, server)); err != nil {
+		return
+	}
+
+	// send to db
+	// e.Ctrl.CreateOne()
 	return
 }
 
@@ -78,8 +87,18 @@ func (e *Email) SendNewEntry(recepients []string) (res constants.DEFAULT_RESPONS
 	e.Client.To = recepients
 	e.Client.Subject = subject
 	e.Client.HTML = []byte(html_msg)
-	e.Client.AttachFile("") //todo
+
+	// attachment
+	if _, err = e.Client.AttachFile(""); err != nil {
+		return
+	}
+
 	// send message
-	e.Client.Send(serverport, smtp.PlainAuth("entry", sender, pwd, server))
+	if err = e.Client.Send(serverport, smtp.PlainAuth("entry", sender, pwd, server)); err != nil {
+		return
+	}
+
+	// send to db
+	// e.Ctrl.CreateOne()
 	return
 }
