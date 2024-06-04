@@ -11,7 +11,6 @@ import (
 type Server struct {
 	cfg      config.HTTP
 	handlers handlers.Handlers
-	// TODO: handlers
 }
 
 func NewServer(cfg config.Config, handlers handlers.Handlers) Server {
@@ -26,7 +25,7 @@ func (s *Server) StartServer() error {
 
 	e.Use(SetCORS())
 
-	SetUpRouter(e)
+	s.SetUpRouter(e)
 
 	errChannel := make(chan error, 1)
 	if err := e.Start(s.cfg.Port); err != nil && err != http.ErrServerClosed {

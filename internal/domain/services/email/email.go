@@ -1,13 +1,19 @@
 package email
 
 import (
+	"fmt"
+	"net/smtp"
+
 	"github.com/FabioSebs/NotiService/internal/config"
+	"github.com/FabioSebs/NotiService/internal/constants"
 	"github.com/jordan-wright/email"
 )
 
 type Emailer interface {
-	Send(subject string)
-	SendHTML(subject string)
+	Send(subject string) (res constants.DEFAULT_RESPONSE, err error)
+	SendHTML(subject string) (res constants.DEFAULT_RESPONSE, err error)
+	SendNewScrape(recepients []string) (res constants.DEFAULT_RESPONSE, err error)
+	SendNewEntry(recepients []string) (res constants.DEFAULT_RESPONSE, err error)
 }
 
 type Email struct {
@@ -22,9 +28,58 @@ func NewEmailer(cfg config.Config) Emailer {
 	}
 }
 
-func (e *Email) Send(subject string) {
+func (e *Email) Send(subject string) (res constants.DEFAULT_RESPONSE, err error) {
 	// Logic goes here
-
+	return
 }
 
-func (e *Email) SendHTML(subject string) {}
+func (e *Email) SendHTML(subject string) (res constants.DEFAULT_RESPONSE, err error) {
+	return
+}
+
+func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPONSE, err error) {
+	var (
+		server string = e.Cfg.Server
+		port   string = e.Cfg.Port
+		sender string = e.Cfg.User
+		pwd    string = e.Cfg.Password
+
+		serverport string = fmt.Sprintf("%s:%s", server, port)
+
+		subject  string = "ICCT New Scrape Completed! (RSS)"
+		html_msg string = constants.HTML_NEW_SCRAPE
+	)
+
+	// setup client
+	e.Client.From = sender
+	e.Client.To = recepients
+	e.Client.Subject = subject
+	e.Client.HTML = []byte(html_msg)
+	// send message
+	e.Client.Send(serverport, smtp.PlainAuth("scraper", sender, pwd, server))
+	return
+}
+
+func (e *Email) SendNewEntry(recepients []string) (res constants.DEFAULT_RESPONSE, err error) {
+	var (
+		server string = e.Cfg.Server
+		port   string = e.Cfg.Port
+		sender string = e.Cfg.User
+		pwd    string = e.Cfg.Password
+
+		serverport string = fmt.Sprintf("%s:%s", server, port)
+
+		subject  string = "ICCT New Entry Added!"
+		html_msg string = constants.HTML_NEW_ENTRY
+	)
+
+	// setup client
+	e.Client.From = sender
+	e.Client.To = recepients
+	e.Client.Subject = subject
+	e.Client.HTML = []byte(html_msg)
+	e.Client.AttachFile("") //todo
+	// send message
+	e.Client.Send(serverport, smtp.PlainAuth("entry", sender, pwd, server))
+	return
+}
