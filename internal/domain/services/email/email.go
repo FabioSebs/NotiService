@@ -66,6 +66,12 @@ func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPON
 
 	// send to db
 	// e.Ctrl.CreateOne()
+
+	//res
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    nil, // TODO: enhance
+	}
 	return
 }
 
@@ -100,5 +106,11 @@ func (e *Email) SendNewEntry(recepients []string) (res constants.DEFAULT_RESPONS
 
 	// send to db
 	// e.Ctrl.CreateOne()
+
+	//res
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    nil, // TODO: enhance
+	}
 	return
 }
