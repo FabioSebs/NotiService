@@ -9,6 +9,7 @@ func (s *Server) SetUpRouter(e *echo.Echo) {
 	// get handlers
 	var (
 		emailHandler handlers.EmailHandler = s.handlers.EmailHandler
+		kafkaHandler handlers.KafkaHandler = s.handlers.KafkaHandler
 	)
 
 	//routes
@@ -16,7 +17,13 @@ func (s *Server) SetUpRouter(e *echo.Echo) {
 	{
 		email := v1.Group("/email")
 		{
-			email.POST("", emailHandler.SendEmail)
+			email.GET("", emailHandler.SendEmail)
+		}
+
+		kafka := v1.Group("/kafka")
+		{
+			kafka.GET("/produce", kafkaHandler.Produce)
+			kafka.GET("/consume", kafkaHandler.Consume)
 		}
 	}
 }

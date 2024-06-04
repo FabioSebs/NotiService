@@ -1,6 +1,9 @@
 package controllers
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/FabioSebs/NotiService/internal/infrastructure"
+	"github.com/jmoiron/sqlx"
+)
 
 type EmailController interface {
 }
@@ -9,8 +12,12 @@ type emailController struct {
 	DB *sqlx.DB
 }
 
-func NewEmailController(db *sqlx.DB) EmailController {
+func NewEmailController(infra infrastructure.Infrastructure) EmailController {
 	return emailController{
-		DB: db,
+		DB: infra.PostgresDB,
 	}
+}
+
+func (e *emailController) SendWelcomingEmail() {
+
 }

@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/FabioSebs/NotiService/internal/constants"
 	"github.com/FabioSebs/NotiService/internal/domain/entity"
-	"github.com/FabioSebs/NotiService/internal/domain/services/email"
+	"github.com/FabioSebs/NotiService/internal/domain/services"
 	"github.com/labstack/echo/v4"
 )
 
@@ -13,10 +13,10 @@ type EmailHandler interface {
 }
 
 type emailHandler struct {
-	Service email.Emailer
+	Service services.Services
 }
 
-func NewEmailHandler(svc email.Emailer) EmailHandler {
+func NewEmailHandler(svc services.Services) EmailHandler {
 	return &emailHandler{
 		Service: svc,
 	}
@@ -40,14 +40,14 @@ func (e *emailHandler) SendEmail(c echo.Context) (err error) {
 	switch typeParam {
 	case "scrape":
 		{
-			res, err = e.Service.SendNewScrape(req.Recipients)
+			res, err = e.Service.Email.SendNewScrape(req.Recipients)
 			if err != nil {
 				return
 			}
 		}
 	case "entry":
 		{
-			res, err = e.Service.SendNewEntry(req.Recipients)
+			res, err = e.Service.Email.SendNewEntry(req.Recipients)
 			if err != nil {
 				return
 			}

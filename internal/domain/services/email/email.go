@@ -1,4 +1,4 @@
-package email
+package email_svc
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/jordan-wright/email"
 )
 
-type Emailer interface {
+type EmailService interface {
 	Send(subject string) (res constants.DEFAULT_RESPONSE, err error)
 	SendHTML(subject string) (res constants.DEFAULT_RESPONSE, err error)
 	SendNewScrape(recepients []string) (res constants.DEFAULT_RESPONSE, err error)
@@ -20,10 +20,10 @@ type Emailer interface {
 type Email struct {
 	Client *email.Email
 	Cfg    config.SMTP
-	Ctrl   controllers.EmailController
+	Ctrl   controllers.Controllers
 }
 
-func NewEmailService(cfg config.Config, ctrl controllers.EmailController) Emailer {
+func NewEmailService(cfg config.Config, ctrl controllers.Controllers) EmailService {
 	return &Email{
 		Client: email.NewEmail(),
 		Cfg:    cfg.SMTP,

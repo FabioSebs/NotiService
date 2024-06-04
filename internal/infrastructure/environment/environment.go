@@ -7,7 +7,11 @@ import (
 
 	"github.com/FabioSebs/NotiService/internal/config"
 	"github.com/FabioSebs/NotiService/internal/domain/controllers"
-	"github.com/FabioSebs/NotiService/internal/domain/services/email"
+	"github.com/FabioSebs/NotiService/internal/domain/services"
+	broker_svc "github.com/FabioSebs/NotiService/internal/domain/services/broker"
+	email_svc "github.com/FabioSebs/NotiService/internal/domain/services/email"
+	"github.com/FabioSebs/NotiService/internal/infrastructure"
+	"github.com/FabioSebs/NotiService/internal/infrastructure/broker"
 	"github.com/FabioSebs/NotiService/internal/infrastructure/database"
 	"github.com/FabioSebs/NotiService/internal/server"
 	"github.com/FabioSebs/NotiService/internal/server/handlers"
@@ -16,18 +20,14 @@ import (
 
 type Environment struct {
 	Cfg      config.Config
-	Svc      Services
+	Svc      services.Services
 	Handlers handlers.Handlers
 	Server   server.Server
 }
 
-type Services struct {
-	Email email.Emailer
-}
-
 func NewEnvironment() (env Environment) {
 	//////////////////////////////////////////////////////////////////////////////////////////
-	///////// infrastructure ////////////////////////////////////////////////////////////////////////
+	///////// configuration ////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////
 	db := config.Database{
 		ConnString: os.Getenv("database.connection.string"),
@@ -50,41 +50,56 @@ func NewEnvironment() (env Environment) {
 		Port: os.Getenv("api.port"),
 	}
 
-	config := config.NewConfig(db, smtp, http)
+	kafka := config.Kafka{
+		Host:  os.Getenv("kafka.host"),
+		Port:  os.Getenv("kafka.port"),
+		Topic: os.Getenv("kafka.topic"),
+	}
 
-	//////////////////////////////////////////////////////////////////////////////////////////
-	///////// databases ////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////
-	psql := database.ConnectPostgresDB(
-		config.Database.Host,
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Name,
-		config.Database.Port,
+	config := config.NewConfig(
+		db,
+		smtp,
+		http,
+		kafka,
 	)
+	//////////////////////////////////////////////////////////////////////////////////////////
+	///////// infrastructure ////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////
+	infra := infrastructure.Infrastructure{
+		PostgresDB: database.ConnectPostgresDB(
+			config.Database.Host,
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Name,
+			config.Database.Port,
+		),
+		Broker: broker.NewKafkaInfra(config.Kafka),
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////
 	///////// controllers ////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////
-	emailCtrl := controllers.NewEmailController(psql)
+	ctrls := controllers.Controllers{
+		Broker: controllers.NewKafkaController(infra),
+		Email:  controllers.NewEmailController(infra),
+	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	///////// services ////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////
-	svcs := Services{
-		Email: email.NewEmailService(config, emailCtrl),
+	svcs := services.Services{
+		Email:  email_svc.NewEmailService(config, ctrls),
+		Broker: broker_svc.NewKafkaService(config, ctrls, infra),
 		// add more
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	///////// handlers ////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////s///////////////////////////////////////////////
-	emailHandler := handlers.NewEmailHandler(
-		svcs.Email,
-		// add more
-	)
-
-	handles := handlers.NewHandler().
-		SetEmailHandler(emailHandler)
+	handles := handlers.Handlers{
+		EmailHandler: handlers.NewEmailHandler(svcs),
+		KafkaHandler: handlers.NewKafkaHandler(svcs),
+	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	///////// server + environment ////////////////////////////////////////////////////////////////////////

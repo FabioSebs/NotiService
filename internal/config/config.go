@@ -4,6 +4,7 @@ type Config struct {
 	Database Database
 	SMTP     SMTP
 	HTTP     HTTP
+	Kafka    Kafka
 }
 
 type Database struct {
@@ -27,10 +28,17 @@ type HTTP struct {
 	Port string
 }
 
-func NewConfig(db Database, smtp SMTP, http HTTP) Config {
+type Kafka struct {
+	Host  string
+	Port  string
+	Topic string
+}
+
+func NewConfig(db Database, smtp SMTP, http HTTP, kafka Kafka) Config {
 	return Config{
 		db,
 		smtp,
 		http,
+		kafka,
 	}
 }
