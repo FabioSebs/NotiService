@@ -25,10 +25,10 @@ func NewBroker(cfg config.Config, svc broker_svc.KafkaService, e_svc email_svc.E
 	}
 }
 
-func (b *Broker) RunConsumer(pipe chan string, cancel context.CancelFunc) {
+func (b *Broker) RunConsumer(pipe chan string, cancel context.CancelFunc, topic string) {
 	var (
 		ctx    context.Context = context.Background()
-		reader                 = b.Svc.GetConsumer()
+		reader                 = b.Svc.GetConsumer(topic)
 	)
 	defer reader.Close()
 
@@ -55,13 +55,13 @@ func (b *Broker) RunConsumer(pipe chan string, cancel context.CancelFunc) {
 	}
 }
 
-func (b *Broker) HandleOTPEvent(ctx context.Context, cancel context.CancelFunc) {
+func (b *Broker) HandleOTPEvent(ctx context.Context, cancel context.CancelFunc, topic string) {
 	pipe := make(chan string) // making buffer to get otp value from
 
 	defer close(pipe) // must close channel so new values can be inserted and read !
 	// if not close channel then will block forever!
 
-	go b.RunConsumer(pipe, cancel)
+	go b.RunConsumer(pipe, cancel, topic)
 
 	// reading from channel
 	for {
@@ -74,7 +74,7 @@ func (b *Broker) HandleOTPEvent(ctx context.Context, cancel context.CancelFunc) 
 
 		case otp := <-pipe:
 			fmt.Println("Processing OTP: " + otp)
-			if _, err := b.EmailSvc.SendHTML(otp); err != nil {
+			if _, err := b.EmailSvc.SendNewScrape([]string{otp}); err != nil {
 				color.Println(color.Red("problem encountered sending email"))
 			}
 		}

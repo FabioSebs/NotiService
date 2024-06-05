@@ -53,9 +53,13 @@ func NewEnvironment() (env Environment) {
 	}
 
 	kafka := config.Kafka{
-		Host:  os.Getenv("kafka.host"),
-		Port:  os.Getenv("kafka.port"),
-		Topic: os.Getenv("kafka.topic"),
+		Host: os.Getenv("kafka.host"),
+		Port: os.Getenv("kafka.port"),
+		Topics: config.Topics{
+			OTP:   os.Getenv("kafka.topic.otp"),
+			Email: os.Getenv("kafka.topic.email"),
+			ICCT:  os.Getenv("kafka.topic.icct"),
+		},
 	}
 
 	config := config.NewConfig(

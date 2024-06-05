@@ -9,6 +9,7 @@ import (
 	"github.com/FabioSebs/NotiService/internal/config"
 	"github.com/FabioSebs/NotiService/internal/constants"
 	"github.com/FabioSebs/NotiService/internal/domain/controllers"
+	"github.com/FabioSebs/NotiService/internal/domain/entity"
 	"github.com/FabioSebs/NotiService/internal/infrastructure"
 	"github.com/labstack/echo/v4"
 	"github.com/segmentio/kafka-go"
@@ -16,9 +17,9 @@ import (
 
 type KafkaService interface {
 	ProduceMessages(c echo.Context, message ...kafka.Message) (res constants.DEFAULT_RESPONSE, err error)
-	ProduceMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
+	ProduceMessage(c echo.Context, req entity.Message) (res constants.DEFAULT_RESPONSE, err error)
 
-	GetConsumer() (reader *kafka.Reader)
+	GetConsumer(topic string) (reader *kafka.Reader)
 	ConsumeMessages(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
 	ConsumeMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
 }
@@ -39,7 +40,7 @@ func NewKafkaService(cfg config.Config, ctrl controllers.Controllers, infra infr
 
 func (k *Kafka) ProduceMessages(c echo.Context, message ...kafka.Message) (res constants.DEFAULT_RESPONSE, err error) {
 	var (
-		conn *kafka.Conn = k.Infra.Broker.Connect()
+		conn *kafka.Conn = k.Infra.Broker.Connect(k.Cfg.Kafka.Topics.OTP)
 	)
 	// have to open connection everytime
 
@@ -61,14 +62,33 @@ func (k *Kafka) ProduceMessages(c echo.Context, message ...kafka.Message) (res c
 	return
 }
 
-func (k *Kafka) ProduceMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error) {
+func (k *Kafka) ProduceMessage(c echo.Context, req entity.Message) (res constants.DEFAULT_RESPONSE, err error) {
 	var (
-		conn    *kafka.Conn = k.Infra.Broker.Connect()
-		message string      = c.Param("otp")
+		conn    *kafka.Conn
+		message string
 	)
 
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	switch c.Param("topic") {
+	case k.Cfg.Kafka.Topics.OTP:
+		conn = k.Infra.Broker.Connect(k.Cfg.Kafka.Topics.OTP)
+		message = req.OTP
 
+	case k.Cfg.Kafka.Topics.Email:
+		conn = k.Infra.Broker.Connect(k.Cfg.Kafka.Topics.Email)
+		message = req.Email
+
+	case k.Cfg.Kafka.Topics.ICCT:
+		conn = k.Infra.Broker.Connect(k.Cfg.Kafka.Topics.ICCT)
+		message = req.ICCT
+	default:
+		res = constants.DEFAULT_RESPONSE{
+			Message: constants.STATUS_ERROR_MSG,
+			Data:    "invalid topic name",
+		}
+		return
+	}
+
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	_, err = conn.Write([]byte(message))
 	if err != nil {
 		log.Fatal("failed to write message:", err)
@@ -85,10 +105,10 @@ func (k *Kafka) ProduceMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, 
 
 	return
 }
-func (k *Kafka) GetConsumer() (reader *kafka.Reader) {
+func (k *Kafka) GetConsumer(topic string) (reader *kafka.Reader) {
 	reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{fmt.Sprintf("%s:%s", k.Cfg.Kafka.Host, k.Cfg.Kafka.Port)},
-		Topic:     k.Cfg.Kafka.Topic,
+		Topic:     topic,
 		Partition: 0,
 		MaxBytes:  10e6,
 	})
@@ -97,7 +117,7 @@ func (k *Kafka) GetConsumer() (reader *kafka.Reader) {
 
 func (k *Kafka) ConsumeMessages(c echo.Context) (res constants.DEFAULT_RESPONSE, err error) {
 	var (
-		conn *kafka.Conn = k.Infra.Broker.Connect()
+		conn *kafka.Conn = k.Infra.Broker.Connect("")
 	)
 
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
@@ -135,7 +155,7 @@ func (k *Kafka) ConsumeMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, 
 
 		reader *kafka.Reader = kafka.NewReader(kafka.ReaderConfig{
 			Brokers:   []string{fmt.Sprintf("%s:%s", k.Cfg.Kafka.Host, k.Cfg.Kafka.Port)},
-			Topic:     k.Cfg.Kafka.Topic,
+			Topic:     c.Param("topic"),
 			Partition: 0,
 			MaxBytes:  10e6,
 		})

@@ -29,9 +29,15 @@ type HTTP struct {
 }
 
 type Kafka struct {
-	Host  string
-	Port  string
-	Topic string
+	Host   string
+	Port   string
+	Topics Topics
+}
+
+type Topics struct {
+	OTP   string
+	Email string
+	ICCT  string
 }
 
 func NewConfig(db Database, smtp SMTP, http HTTP, kafka Kafka) Config {

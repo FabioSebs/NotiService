@@ -10,7 +10,7 @@ import (
 )
 
 type KafkaInfra interface {
-	Connect() *kafka.Conn
+	Connect(topic string) *kafka.Conn
 }
 
 type kafkaInfra struct {
@@ -23,12 +23,11 @@ func NewKafkaInfra(cfg config.Kafka) KafkaInfra {
 	}
 }
 
-func (k *kafkaInfra) Connect() (conn *kafka.Conn) {
+func (k *kafkaInfra) Connect(topic string) (conn *kafka.Conn) {
 	var (
 		ctx       context.Context = context.Background()
 		network   string          = "tcp"
 		address   string          = fmt.Sprintf("%s:%s", k.Cfg.Host, k.Cfg.Port)
-		topic     string          = k.Cfg.Topic
 		partition int             = 0
 	)
 
