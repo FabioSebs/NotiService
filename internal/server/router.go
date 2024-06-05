@@ -22,7 +22,7 @@ func (s *Server) SetUpRouter(e *echo.Echo) {
 
 		kafka := v1.Group("/kafka")
 		{
-			kafka.GET("/produce", kafkaHandler.Produce)
+			kafka.GET("/produce/:otp", kafkaHandler.Produce)
 			kafka.GET("/consume", kafkaHandler.Consume)
 		}
 	}

@@ -7,61 +7,101 @@ import (
 	"time"
 
 	"github.com/FabioSebs/NotiService/internal/config"
+	"github.com/FabioSebs/NotiService/internal/constants"
 	"github.com/FabioSebs/NotiService/internal/domain/controllers"
 	"github.com/FabioSebs/NotiService/internal/infrastructure"
+	"github.com/labstack/echo/v4"
 	"github.com/segmentio/kafka-go"
 )
 
 type KafkaService interface {
-	ProduceMessages(message ...kafka.Message)
-	ProduceMessage(message string)
-	ConsumeMessages()
-	ConsumeMessage()
+	ProduceMessages(c echo.Context, message ...kafka.Message) (res constants.DEFAULT_RESPONSE, err error)
+	ProduceMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
+
+	GetConsumer() (reader *kafka.Reader)
+	ConsumeMessages(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
+	ConsumeMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error)
 }
 
 type Kafka struct {
-	Conn  *kafka.Conn
+	Infra infrastructure.Infrastructure
 	Cfg   config.Config
 	Ctrls controllers.Controllers
 }
 
 func NewKafkaService(cfg config.Config, ctrl controllers.Controllers, infra infrastructure.Infrastructure) KafkaService {
 	return &Kafka{
-		Conn:  infra.Broker.Connect(),
+		Infra: infra,
 		Cfg:   cfg,
 		Ctrls: ctrl,
 	}
 }
 
-func (k *Kafka) ProduceMessages(message ...kafka.Message) {
-	k.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+func (k *Kafka) ProduceMessages(c echo.Context, message ...kafka.Message) (res constants.DEFAULT_RESPONSE, err error) {
+	var (
+		conn *kafka.Conn = k.Infra.Broker.Connect()
+	)
+	// have to open connection everytime
 
-	_, err := k.Conn.WriteMessages(message...)
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+
+	_, err = conn.WriteMessages(message...)
 	if err != nil {
 		log.Fatal("failed to write messages:", err)
 	}
 
-	if err := k.Conn.Close(); err != nil {
+	if err := conn.Close(); err != nil {
 		log.Fatal("failed to close writer:", err)
 	}
+
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    nil,
+	}
+	return
 }
 
-func (k *Kafka) ProduceMessage(message string) {
-	k.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+func (k *Kafka) ProduceMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error) {
+	var (
+		conn    *kafka.Conn = k.Infra.Broker.Connect()
+		message string      = c.Param("otp")
+	)
 
-	_, err := k.Conn.Write([]byte(message))
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+
+	_, err = conn.Write([]byte(message))
 	if err != nil {
 		log.Fatal("failed to write message:", err)
 	}
 
-	if err := k.Conn.Close(); err != nil {
+	if err := conn.Close(); err != nil {
 		log.Fatal("failed to close writer:", err)
 	}
+
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    nil,
+	}
+
+	return
+}
+func (k *Kafka) GetConsumer() (reader *kafka.Reader) {
+	reader = kafka.NewReader(kafka.ReaderConfig{
+		Brokers:   []string{fmt.Sprintf("%s:%s", k.Cfg.Kafka.Host, k.Cfg.Kafka.Port)},
+		Topic:     k.Cfg.Kafka.Topic,
+		Partition: 0,
+		MaxBytes:  10e6,
+	})
+	return
 }
 
-func (k *Kafka) ConsumeMessages() {
-	k.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	batch := k.Conn.ReadBatch(10e3, 1e6) // fetch 10KB min, 1MB max
+func (k *Kafka) ConsumeMessages(c echo.Context) (res constants.DEFAULT_RESPONSE, err error) {
+	var (
+		conn *kafka.Conn = k.Infra.Broker.Connect()
+	)
+
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	batch := conn.ReadBatch(10e3, 1e6) // fetch 10KB min, 1MB max
 
 	b := make([]byte, 10e3) // 10KB max per message
 
@@ -77,12 +117,19 @@ func (k *Kafka) ConsumeMessages() {
 		log.Fatal("failed to close batch:", err)
 	}
 
-	if err := k.Conn.Close(); err != nil {
+	if err := conn.Close(); err != nil {
 		log.Fatal("failed to close connection:", err)
 	}
+
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    string(b[:]),
+	}
+
+	return
 }
 
-func (k *Kafka) ConsumeMessage() {
+func (k *Kafka) ConsumeMessage(c echo.Context) (res constants.DEFAULT_RESPONSE, err error) {
 	var (
 		ctx context.Context = context.Background()
 
@@ -92,10 +139,12 @@ func (k *Kafka) ConsumeMessage() {
 			Partition: 0,
 			MaxBytes:  10e6,
 		})
+
+		message kafka.Message
 	)
 
 	for {
-		message, err := reader.ReadMessage(ctx)
+		message, err = reader.ReadMessage(ctx)
 		if err != nil {
 			break
 		}
@@ -105,4 +154,11 @@ func (k *Kafka) ConsumeMessage() {
 	if err := reader.Close(); err != nil {
 		log.Fatal("failed to close reader:", err)
 	}
+
+	res = constants.DEFAULT_RESPONSE{
+		Message: constants.STATUS_SUCCESS_MSG,
+		Data:    string(message.Value),
+	}
+
+	return
 }

@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
+	broker_process "github.com/FabioSebs/NotiService/internal/broker"
 	"github.com/FabioSebs/NotiService/internal/config"
 	"github.com/FabioSebs/NotiService/internal/domain/controllers"
 	"github.com/FabioSebs/NotiService/internal/domain/services"
@@ -23,6 +24,7 @@ type Environment struct {
 	Svc      services.Services
 	Handlers handlers.Handlers
 	Server   server.Server
+	Broker   broker_process.Broker
 }
 
 func NewEnvironment() (env Environment) {
@@ -102,15 +104,17 @@ func NewEnvironment() (env Environment) {
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
-	///////// server + environment ////////////////////////////////////////////////////////////////////////
+	///////// processes + environment ////////////////////////////////////////////////////////////////////////
 	////////////////////////// //////////////////////////////////////////////////////////////
 	server := server.NewServer(config, handles)
+	broker := broker_process.NewBroker(config, svcs.Broker, svcs.Email)
 
 	env = Environment{
 		Cfg:      config,
 		Svc:      svcs,
 		Handlers: handles,
 		Server:   server,
+		Broker:   broker,
 	}
 	return
 }

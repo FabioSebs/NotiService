@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/FabioSebs/NotiService/internal/config"
@@ -11,6 +12,7 @@ import (
 type Server struct {
 	cfg      config.HTTP
 	handlers handlers.Handlers
+	echo     *echo.Echo
 }
 
 func NewServer(cfg config.Config, handlers handlers.Handlers) Server {
@@ -21,16 +23,22 @@ func NewServer(cfg config.Config, handlers handlers.Handlers) Server {
 }
 
 func (s *Server) StartServer() error {
-	e := echo.New()
-
-	e.Use(SetCORS())
-
-	s.SetUpRouter(e)
+	s.echo = echo.New()
+	s.echo.HideBanner = true
+	s.echo.Use(SetCORS())
+	s.SetUpRouter(s.echo)
 
 	errChannel := make(chan error, 1)
-	if err := e.Start(s.cfg.Port); err != nil && err != http.ErrServerClosed {
+	if err := s.echo.Start(s.cfg.Port); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
 	return <-errChannel
+}
+
+func (s *Server) ShutDownServer(ctx context.Context) error {
+	if err := s.echo.Shutdown(ctx); err != nil {
+		return err
+	}
+	return nil
 }
