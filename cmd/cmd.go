@@ -32,9 +32,9 @@ func Run() {
 	}()
 
 	// start brokers in seperate threads
-	go env.Broker.HandleOTPEvent(ctx, cancel, env.Cfg.Kafka.Topics.Email)
-	go env.Broker.HandleOTPEvent(ctx, cancel, env.Cfg.Kafka.Topics.OTP)
-	go env.Broker.HandleOTPEvent(ctx, cancel, env.Cfg.Kafka.Topics.ICCT)
+	go env.Broker.HandleEmailEvent(ctx, cancel, env.Cfg.Kafka.Topics.Email)
+	// go env.Broker.HandleOTPEvent(ctx, cancel, env.Cfg.Kafka.Topics.OTP)
+	// go env.Broker.HandleOTPEvent(ctx, cancel, env.Cfg.Kafka.Topics.ICCT)
 
 	// main thread is waiting for os interrupt aka context cancel
 	<-ctx.Done()

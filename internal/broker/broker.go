@@ -55,26 +55,26 @@ func (b *Broker) RunConsumer(pipe chan string, cancel context.CancelFunc, topic 
 	}
 }
 
-func (b *Broker) HandleOTPEvent(ctx context.Context, cancel context.CancelFunc, topic string) {
+func (b *Broker) HandleEmailEvent(ctx context.Context, cancel context.CancelFunc, topic string) {
 	pipe := make(chan string) // making buffer to get otp value from
 
 	defer close(pipe) // must close channel so new values can be inserted and read !
 	// if not close channel then will block forever!
 
+	// listening to event
 	go b.RunConsumer(pipe, cancel, topic)
 
 	// reading from channel
 	for {
 		select {
-
 		case <-ctx.Done():
 			color.Println(color.Red("handlers shutting down ..."))
 			cancel()
 			return
 
-		case otp := <-pipe:
-			fmt.Println("Processing OTP: " + otp)
-			if _, err := b.EmailSvc.SendNewScrape([]string{otp}); err != nil {
+		case msg := <-pipe:
+			fmt.Println("Processing Email: " + msg)
+			if _, err := b.EmailSvc.SendWelcome([]string{msg}); err != nil {
 				color.Println(color.Red("problem encountered sending email"))
 			}
 		}
