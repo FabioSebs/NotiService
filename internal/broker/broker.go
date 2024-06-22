@@ -12,12 +12,13 @@ import (
 )
 
 type Broker struct {
-	Cfg      config.Kafka
-	Svc      broker_svc.KafkaService
-	EmailSvc email_svc.EmailService
+	Cfg         config.Kafka
+	Svc         broker_svc.KafkaService
+	EmailSvc    email_svc.EmailService
+	EmailConfig config.SMTP
 }
 
-func NewBroker(cfg config.Config, svc broker_svc.KafkaService, e_svc email_svc.EmailService) Broker {
+func NewBroker(cfg config.Config, svc broker_svc.KafkaService, e_svc email_svc.EmailService, e_cfg config.SMTP) Broker {
 	return Broker{
 		Cfg:      cfg.Kafka,
 		Svc:      svc,
@@ -75,12 +76,12 @@ func (b *Broker) HandleEmailEvent(ctx context.Context, cancel context.CancelFunc
 		case msg := <-pipe:
 			if msg == "scrape" {
 				fmt.Println("Processing Scrape: " + msg)
-				if _, err := b.EmailSvc.SendNewEntry([]string{msg}); err != nil {
+				if _, err := b.EmailSvc.SendNewEntry(b.EmailConfig.Recipients); err != nil {
 					color.Println(color.Red("problem encountered sending email"))
 				}
 			} else {
 				fmt.Println("Processing Email: " + msg)
-				if _, err := b.EmailSvc.SendWelcome([]string{msg}); err != nil {
+				if _, err := b.EmailSvc.SendWelcome(b.EmailConfig.Recipients); err != nil {
 					color.Println(color.Red("problem encountered sending email"))
 				}
 			}

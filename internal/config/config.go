@@ -17,10 +17,11 @@ type Database struct {
 }
 
 type SMTP struct {
-	Server   string
-	Port     string
-	User     string
-	Password string
+	Server     string
+	Port       string
+	User       string
+	Password   string
+	Recipients []string
 }
 
 type HTTP struct {

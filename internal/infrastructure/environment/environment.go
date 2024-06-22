@@ -41,10 +41,11 @@ func NewEnvironment() (env Environment) {
 	}
 
 	smtp := config.SMTP{
-		Server:   os.Getenv("smtp.server"),
-		Port:     os.Getenv("smtp.port"),
-		User:     os.Getenv("smtp.user"),
-		Password: os.Getenv("smtp.password"),
+		Server:     os.Getenv("smtp.server"),
+		Port:       os.Getenv("smtp.port"),
+		User:       os.Getenv("smtp.user"),
+		Password:   os.Getenv("smtp.password"),
+		Recipients: utils.GetRecipients(),
 	}
 
 	http := config.HTTP{
@@ -111,7 +112,7 @@ func NewEnvironment() (env Environment) {
 	///////// processes + environment ////////////////////////////////////////////////////////////////////////
 	////////////////////////// //////////////////////////////////////////////////////////////
 	server := server.NewServer(config, handles)
-	broker := broker_process.NewBroker(config, svcs.Broker, svcs.Email)
+	broker := broker_process.NewBroker(config, svcs.Broker, svcs.Email, smtp)
 
 	env = Environment{
 		Cfg:      config,
