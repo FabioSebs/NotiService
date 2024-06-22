@@ -73,10 +73,18 @@ func (b *Broker) HandleEmailEvent(ctx context.Context, cancel context.CancelFunc
 			return
 
 		case msg := <-pipe:
-			fmt.Println("Processing Email: " + msg)
-			if _, err := b.EmailSvc.SendWelcome([]string{msg}); err != nil {
-				color.Println(color.Red("problem encountered sending email"))
+			if msg == "scrape" {
+				fmt.Println("Processing Scrape: " + msg)
+				if _, err := b.EmailSvc.SendNewEntry([]string{msg}); err != nil {
+					color.Println(color.Red("problem encountered sending email"))
+				}
+			} else {
+				fmt.Println("Processing Email: " + msg)
+				if _, err := b.EmailSvc.SendWelcome([]string{msg}); err != nil {
+					color.Println(color.Red("problem encountered sending email"))
+				}
 			}
+
 		}
 	}
 }

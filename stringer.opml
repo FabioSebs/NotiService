@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<opml version="1.0">
+  <head>
+    <title>Feeds from Stringer</title>
+  </head>
+  <body>
+    <outline text="Ministry of Energy" title="Ministry of Energy" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/moe"/>
+    <outline text="Antara News Jakarta" title="Antara News Jakarta" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/antara"/>
+    <outline text="Ministry of Transportation" title="Ministry of Transportation" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/mot"/>
+    <outline text="Thailand News" title="Thailand News" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/thailand"/>
+    <outline text="Vietnam News" title="Vietnam News" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/vietnam"/>
+    <outline text="Ministry of Energy [EN]" title="Ministry of Energy [EN]" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/moe_en"/>
+    <outline text="Ministry of Transport [EN]" title="Ministry of Transport [EN]" type="rss" xmlUrl="https://fabrzy.dev/icct/rss/mot_en"/>
+  </body>
+</opml>

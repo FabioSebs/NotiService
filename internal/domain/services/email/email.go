@@ -50,7 +50,7 @@ func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPON
 
 		serverport string = fmt.Sprintf("%s:%s", server, port)
 
-		subject  string = "ICCT New Scrape Completed! (RSS)"
+		subject  string = "ICCT New Source Added!"
 		html_msg string = constants.HTML_NEW_SCRAPE
 	)
 
@@ -59,6 +59,7 @@ func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPON
 	e.Client.To = recepients
 	e.Client.Subject = subject
 	e.Client.HTML = []byte(html_msg)
+	e.Client.AttachFile("stringer.opml")
 
 	// send message
 	if err = e.Client.Send(serverport, smtp.PlainAuth("scraper", sender, pwd, server)); err != nil {
