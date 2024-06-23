@@ -63,6 +63,7 @@ func (e *Email) SendNewScrape(recepients []string) (res constants.DEFAULT_RESPON
 
 	// send message
 	if err = e.Client.Send(serverport, smtp.PlainAuth("scraper", sender, pwd, server)); err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 

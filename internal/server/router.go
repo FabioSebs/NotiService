@@ -17,7 +17,7 @@ func (s *Server) SetUpRouter(e *echo.Echo) {
 	{
 		email := v1.Group("/email")
 		{
-			email.GET("", emailHandler.SendEmail)
+			email.POST("", emailHandler.SendEmail)
 		}
 
 		kafka := v1.Group("/kafka")
